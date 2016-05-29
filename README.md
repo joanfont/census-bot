@@ -10,7 +10,7 @@ a Telegram bot for consulting the electoral census of Palma
 * Run `python3 main.py` and the script will process any message received and return the census info.
 
 ### With docker
-* Run `docker run joanfont/census-bot -e "TOKEN={{ your telegram token }}" -e "CENSUS_URL={{ your census provider url }}`
+* Run `docker run -e "TOKEN={{ your telegram token }}" -e "CENSUS_URL={{ your census provider url }} joanfont/census-bot`
 
 
 ## Use a different census data provider

@@ -1,3 +1,3 @@
 requests==2.10.0
 python-dotenv==0.5.1
-telepot==8.1
+python-telegram-bot==4.2.0

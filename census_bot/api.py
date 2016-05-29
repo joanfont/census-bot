@@ -49,7 +49,7 @@ class ElectoralCensusClient:
             nif=nif
         )
 
-        response = requests.get(url)
+        response = requests.get(url, verify=False)
         status_code = response.status_code
         body = response.json()
 

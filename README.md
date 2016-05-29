@@ -18,7 +18,7 @@ you only have to provide an API base URL that implements the endpoint `/find?nif
 
 And you must provide your Telegram's bot API KEY. 
 
-This configuration must be palced in a `.env` file located at project root. You can see `.env` in the file `.env.sample`
+This configuration must be palced in a `.env` file located at project root. You can see a sample of this configuration in the file `.env.sample`
 
 ##### disclaimer
 This bot only makes requests to an API that provides census data. It does not have any relation with Ajuntament de Palma. 

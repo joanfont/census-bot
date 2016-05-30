@@ -1,18 +1,22 @@
-from telegram.ext import Updater, MessageHandler, CommandHandler, Filters
-from functools import partial
+import telegram
+from telegram.ext import Updater, MessageHandler, CommandHandler
+
 from census_bot.api import ElectoralCensusClient
+from census_bot.helper import is_spanish_id
+from census_bot import strings
+
+
+class CensusBotFilters:
+    @staticmethod
+    def spanish_id(message):
+        return message.text and not message.text.startswith('/') and is_spanish_id(message.text)
+
+    @staticmethod
+    def language(message):
+        return message.text and not message.text.startswith('/') and message.text in strings.AVAILABLE_LANGUAGES
 
 
 class CensusBot:
-
-    START_MESSAGE = '''
-    Benvingut al bot per consultar la informació del Cens Electoral de Palma.''' \
-    u'''Podràs rebre la informació d'on et toca anar a votar (districte, secció, mesa, col·legi i adreça). \n\n''' \
-    '''Per començar escriu el teu NIF i consulta la teva informació censal'''
-
-    VOTER_MESSAGE = 'Districte: {district}\nSecció: {section}\nMesa: {table}\nCol·legi: {school}\nDirecció: {address}'
-
-
     def __init__(self, token, census_client):
         self.updater = Updater(token=token)
         self.census_client = census_client
@@ -20,11 +24,11 @@ class CensusBot:
     def configure_callbacks(self):
         dispatcher = self.updater.dispatcher
 
-        find_handler_partial = partial(self.__find_handler)
-        start_handler_partial = partial(self.__start_handler)
+        dispatcher.add_handler(MessageHandler([CensusBotFilters.spanish_id], self.__find_handler))
+        dispatcher.add_handler(MessageHandler([CensusBotFilters.language], self.__set_language_handler))
 
-        dispatcher.add_handler(MessageHandler([Filters.text], find_handler_partial))
-        dispatcher.add_handler(CommandHandler('start', start_handler_partial))
+        dispatcher.add_handler(CommandHandler('start', self.__start_handler))
+        dispatcher.add_handler(CommandHandler('language', self.__language_handler))
 
     def __find_handler(self, bot, update):
         if not self.census_client or not isinstance(self.census_client, ElectoralCensusClient):
@@ -40,14 +44,30 @@ class CensusBot:
 
         bot.send_message(chat_id, response)
 
-    def __start_handler(self, bot, update):
+    @staticmethod
+    def __start_handler(bot, update):
         chat_id = update.message.chat_id
-        bot.send_message(chat_id, self.START_MESSAGE)
+        bot.send_message(chat_id, strings.START_MESSAGE)
+
+    @staticmethod
+    def __language_handler(bot, update):
+        chat_id = update.message.chat_id
+        custom_keyboard = [strings.AVAILABLE_LANGUAGES]
+        reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
+        bot.send_message(chat_id, strings.SELECT_LANGUAGE, reply_markup=reply_markup)
+
+    @classmethod
+    def __set_language_handler(cls, bot, update):
+        message = update.message.text
+        if message not in strings.AVAILABLE_LANGUAGES:
+            cls.__language_handler(bot, update)
+
+        chat_id = update.message.chat_id
+        bot.send_message(chat_id, update.message.text)
 
     @staticmethod
     def __response_formatter(voter):
-        return '''
-        Districte: {district}\nSecció: {section}\nMesa: {table}\nCol·legi: {school}\nDirecció: {address}'''.format(
+        return strings.VOTER_MESSAGE.format(
             district=voter.district,
             section=voter.section,
             table=voter.table,

@@ -1,8 +1,10 @@
 build:
-	docker build -t joanfont/census-bot .
+	docker-compose build bot
 push:
 	docker push joanfont/census-bot
 release:
 	make build push
 start:
-	docker run --rm joanfont/census-bot
+	docker-compose run --rm --service-ports bot
+clean:
+	rm -fr log/*

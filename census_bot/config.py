@@ -9,3 +9,6 @@ TOKEN = os.getenv('TOKEN')
 
 CENSUS_URL = os.getenv('CENSUS_URL')
 
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+

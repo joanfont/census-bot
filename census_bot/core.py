@@ -1,8 +1,10 @@
+
 import telegram
 from telegram.ext import Updater, MessageHandler, CommandHandler
 
 from census_bot.api import ElectoralCensusClient
 from census_bot.helper import is_spanish_id
+from census_bot.log import logger
 from census_bot import strings
 
 
@@ -17,9 +19,10 @@ class CensusBotFilters:
 
 
 class CensusBot:
-    def __init__(self, token, census_client):
+    def __init__(self, token, census_client, settings_handler):
         self.updater = Updater(token=token)
         self.census_client = census_client
+        self.settings_handler = settings_handler
 
     def configure_callbacks(self):
         dispatcher = self.updater.dispatcher
@@ -31,49 +34,80 @@ class CensusBot:
         dispatcher.add_handler(CommandHandler('language', self.__language_handler))
 
     def __find_handler(self, bot, update):
-        if not self.census_client or not isinstance(self.census_client, ElectoralCensusClient):
-            return
-
-        chat_id = update.message.chat_id
-        nif = update.message.text
         try:
-            voter = self.census_client.find(nif)
-            response = self.__response_formatter(voter)
-        except self.census_client.APIError as e:
-            response = str(e)
+            if not self.census_client or not isinstance(self.census_client, ElectoralCensusClient):
+                return
 
-        bot.send_message(chat_id, response)
+            chat_id = update.message.chat_id
+            user_id = update.message.from_user.id
 
-    @staticmethod
-    def __start_handler(bot, update):
+            language = self.__get_user_language(user_id)
+
+            nif = update.message.text
+            try:
+                voter = self.census_client.find(nif)
+                response = self.__response_formatter(voter, language)
+            except self.census_client.APIError as e:
+                response = str(e)
+
+            bot.send_message(chat_id, response)
+        except Exception as e:
+            logger.error(str(e))
+
+    def __start_handler(self, bot, update):
         chat_id = update.message.chat_id
-        bot.send_message(chat_id, strings.START_MESSAGE)
+        user_id = update.message.from_user.id
 
-    @staticmethod
-    def __language_handler(bot, update):
+        language = self.__get_user_language(user_id)
+        start_message = strings.START_MESSAGES.get(language)
+
+        bot.send_message(chat_id, start_message)
+
+    def __language_handler(self, bot, update):
         chat_id = update.message.chat_id
+        user_id = update.message.from_user.id
+
         custom_keyboard = [strings.AVAILABLE_LANGUAGES]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-        bot.send_message(chat_id, strings.SELECT_LANGUAGE, reply_markup=reply_markup)
 
-    @classmethod
-    def __set_language_handler(cls, bot, update):
-        message = update.message.text
-        if message not in strings.AVAILABLE_LANGUAGES:
-            cls.__language_handler(bot, update)
+        language = self.__get_user_language(user_id)
+        select_language_message = strings.SELECT_LANGUAGE_MESSAGES.get(language)
+
+        bot.send_message(chat_id, select_language_message, reply_markup=reply_markup)
+
+    def __set_language_handler(self, bot, update):
+        language = update.message.text
+
+        if language not in strings.AVAILABLE_LANGUAGES:
+            self.__language_handler(bot, update)
 
         chat_id = update.message.chat_id
-        bot.send_message(chat_id, update.message.text)
+        user_id = update.message.from_user.id
+
+        self.__set_user_language(user_id, language)
+
+        reply_markup = telegram.ReplyKeyboardHide()
+
+        bot.send_message(chat_id, update.message.text, reply_markup=reply_markup)
 
     @staticmethod
-    def __response_formatter(voter):
-        return strings.VOTER_MESSAGE.format(
+    def __response_formatter(voter, language):
+        message = strings.VOTER_MESSAGES.get(language)
+        logger.debug(language)
+        return message.format(
             district=voter.district,
             section=voter.section,
             table=voter.table,
             school=voter.school,
             address=voter.address
         )
+
+    def __get_user_language(self, user_id):
+        return self.settings_handler.get_language(user_id)
+
+    def __set_user_language(self, user_id, language):
+        language_key = strings.REVERSED_LANGUAGES_MAPPING.get(language)
+        self.settings_handler.set_language(user_id, language_key)
 
     def start(self):
         self.configure_callbacks()

@@ -39,7 +39,9 @@ class ElectoralCensusClient:
     NifRequiredError = NifRequiredError
     InvalidNifError = InvalidNifError
 
-    def __init__(self, base_url):
+    def __init__(self, name, code, base_url):
+        self.name = name
+        self.code = code
         self.base_url = base_url
 
     def find(self, nif):
@@ -59,3 +61,6 @@ class ElectoralCensusClient:
             raise error_class(error_desc)
 
         return Voter(**body)
+
+    def __str__(self):
+        return 'ElectoralCensusClient: {url}'.format(url=self.base_url)

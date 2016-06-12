@@ -1,0 +1,15 @@
+census:
+  default: census_1
+  available:
+    census_1:
+      name: %CENSUS_1_NAME%
+      url: %CENSUS_1_URL%
+    census_2:
+      name: %CENSUS_2_NAME%
+      url: %CENSUS_2_URL%
+
+telegram:
+  token: %YOUR_TELEGRAM_TOKEN%
+
+language:
+  default: ca

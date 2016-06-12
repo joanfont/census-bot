@@ -1,6 +1,5 @@
 import redis
-from census_bot.config import REDIS_HOST, REDIS_PORT
-from census_bot.strings import DEFAULT_LANGUAGE
+from census_bot.config import REDIS_HOST, REDIS_PORT, DEFAULT_CENSUS, DEFAULT_LANGUAGE
 
 
 class Handler:
@@ -13,8 +12,17 @@ class Handler:
 
     def get_language(self, user_id):
         key = self.__build_key(user_id, 'language')
-        language = self.redis.get(key) or DEFAULT_LANGUAGE
-        return str(language, 'utf-8')
+        language = self.redis.get(key)
+        return str(language, 'utf-8') if language else DEFAULT_LANGUAGE
+
+    def set_census(self, user_id, census):
+        key = self.__build_key(user_id, 'census')
+        return self.redis.set(key, census)
+
+    def get_census(self, user_id):
+        key = self.__build_key(user_id, 'census')
+        census = self.redis.get(key)
+        return str(census, 'utf-8') if census else DEFAULT_CENSUS
 
     @staticmethod
     def __build_key(user_id, key):

@@ -19,6 +19,10 @@ SELECT_LANGUAGE_MESSAGES = {
     'es': '''Escoge el idioma que quieres utilizar'''
 }
 
+SELECT_CENSUS_MESSAGES = {
+    'ca': '''Tria el cens que vols consultar''',
+    'es': '''Escoge el censo que quieres consultar'''
+}
 
 LANGUAGES_MAPPING = {
     'ca': 'Català',
@@ -27,5 +31,3 @@ LANGUAGES_MAPPING = {
 
 REVERSED_LANGUAGES_MAPPING = dict((v, k) for (k, v) in LANGUAGES_MAPPING.items())
 AVAILABLE_LANGUAGES = LANGUAGES_MAPPING.values()
-
-DEFAULT_LANGUAGE = 'ca'

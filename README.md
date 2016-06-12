@@ -5,19 +5,35 @@ a Telegram bot for consulting the electoral census of Palma
 
 ### With python `virtualenv`
 
+* First make sure you have [redis](http://redis.io/) installed.
 * Create a Python virtualenv and install the package requirements.
-* Create a `.env` file with `CENSUS_URL` and `TOKEN` values.
+* Create a `config.yml` file with the `config.yml.sample` as a template.
 * Run `python3 main.py` and the script will process any message received and return the census info.
 
 ### With docker
-* Run `docker run -e "TOKEN={{ your telegram token }}" -e "CENSUS_URL={{ your census provider url }} joanfont/census-bot`
+
+* Create a `config.yml` file with the `config.yml.sample` as a template.
+* First start your redis instance: `docker run -d --name redis library/redis:3.2.0`
+* Run `docker run --link redis:redis -e "REDIS_HOST=redis" -e "REDIS_PORT=6379" -v ${PWD}/config.yml:/code/config.yml joanfont/census-bot`
 
 
-## Use a different census data provider
+## Add your data providers
 
-If you forked the repository that provides census data ([electoral-census](https://www.github.com/joanfont/electoral-census)), 
-you only have to provide an API base URL that implements the endpoint `/find?nif=44444444A` that returns a JSON like this:
+In `config.yml` file you can specify the census data providers' bot can use. You can add yours:
 
+```yml
+census:
+  default: palma
+  available:
+    palma:
+      name: Palma
+      url: https://cens.joan-font.cat
+    inca:
+      name: Inca
+      url: http://cens.incaciutat.com
+```
+
+The census data provider endpoint (`/find?nif=44444444A`) must return a response like this one: 
 ```javascript
 {
     "address": "CA PABLO IGLESIAS  4 , 07004 PALMA",
